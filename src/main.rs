@@ -1,6 +1,6 @@
 use std::{collections::HashMap, env, error::Error, fs::{create_dir, metadata, File}, process::exit};
 use serde::Deserialize;
-use cliclack::{intro, select, spinner, outro};
+use cliclack::{intro, outro, select, spinner};
 use colored::*;
 
 #[derive(Debug, Deserialize)]
@@ -43,8 +43,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .item("latest", "Latest", "")
         .interact()?;
 
-    for (version, _id) in &response.promos {
-        if version.contains(&tipo) {
+    for version in response.promos.keys() {
+        if version.contains(tipo) {
             ord.push(version);
         }
     }
@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .map(|part| part.parse::<u16>())
             .collect::<Result<Vec<u16>, _>>()
             .unwrap_or_else(|_| Vec::new());
-        let comb_nums: u16 = nums.iter().fold(0, |acc, &num| (acc * 100) + num as u16);
+        let comb_nums: u16 = nums.iter().fold(0, |acc, &num| (acc * 100) + num);
 
         comb_nums
     });
@@ -101,8 +101,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     spinner.start("Downloading...");
 
     let path: String = format!("{}/forge-{}-installer.jar", dir, v_num);
-    let mut dld = reqwest::blocking::get(d_url.clone()).expect(format!("[{}] Request failed", "ERROR".red()).as_str());
-    let mut out = File::create(path).expect(format!("[{}] Failed to create file", "ERROR".red()).as_str());
+    let mut dld = reqwest::blocking::get(d_url.clone()).unwrap_or_else(|_| panic!("[{}] Request failed", "ERROR".red()));
+    let mut out = File::create(path.clone()).unwrap_or_else(|_| panic!("[{}] Failed to create file", "ERROR".red()));
     let _ = dld.copy_to(&mut out);
 
     spinner.stop("Downloaded successfully");
